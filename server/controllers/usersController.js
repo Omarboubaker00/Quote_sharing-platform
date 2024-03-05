@@ -1,44 +1,52 @@
 const connection = require('../database-mysql/index');
 
-function signup(name,email, password,nationality) {
-  if (!email || !password) {
-    return Promise.reject({ error: 'Username and password are required fields' });
+async function signup(req, res) {
+  try {
+    const { name, email, password, nationality } = req.body;
+    if (!name || !email || !password || !nationality) {
+      return res.status(400).json();
+    }
+
+    const sql = 'INSERT INTO users (name,email,password,nationality) VALUES (?, ?, ?, ?)';
+
+    await connection.query(sql, [name, email, password, nationality]);
+    res.status(201).json({ message: 'User registered successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json(error);
   }
-
-  return connection.execute('INSERT INTO users (name,email, password,nationality) VALUES (?,?,?, ?)', [name,email, password,nationality])
-    .then(() => ({ message: 'User registered successfully' }))
-    .catch((err) => {
-      console.error(err.message);
-      throw { error: 'Internal Server Error' };
-    });
 }
 
-function login(email, password) {
-  if (!email || !password) {
-    return Promise.reject({ error: 'Email and password are required fields' });
+async function login(req, res) {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json();
+    }
+
+    const sql = 'SELECT * FROM users WHERE email = ? AND password = ?';
+
+    const [results] = await connection.query(sql, [email, password]);
+    if (results.length === 0) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+
+    res.status(200).json({ message: 'Login successful' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json(error);
   }
-
-  return connection.execute('SELECT * FROM users WHERE email = ? AND password = ?', [email, password])
-    .then(([results]) => {
-      if (results.length === 0) {
-        throw { error: 'Invalid email or password' };
-      }
-
-      return { message: 'Login successful' };
-    })
-    .catch((err) => {
-      console.error(err.message);
-      throw { error: 'Internal Server Error' };
-    });
 }
 
-const getUsers=()=> {
-  return connection.execute('SELECT * FROM users')
-    .then(([results]) => results)
-    .catch((err) => {
-      console.error(err.message);
-      throw { error: 'Internal Server Error' };
-    });
+async function getUsers(req, res) {
+  try {
+    const sql = 'SELECT * FROM users ';
+    const [results] = await connection.query(sql);
+    res.status(200).json(results);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json(error);
+  }
 }
 
-module.exports = { signup, login ,getUsers};
+module.exports = { signup, login, getUsers };
