@@ -29,24 +29,17 @@ async function login(req, res) {
     const [results] = await connection.query(sql, [email, password]);
     if (results.length === 0) {
       return res.status(401).json({ error: 'Invalid email or password' });
+      
     }
-
-    res.status(200).json({ message: 'Login successful' });
+console.log(results)
+    res.status(200).json(results[0]);
   } catch (error) {
     console.error(error);
     res.status(500).json(error);
   }
 }
 
-async function getUsers(req, res) {
-  try {
-    const sql = 'SELECT * FROM users ';
-    const [results] = await connection.query(sql);
-    res.status(200).json(results);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json(error);
-  }
-}
 
-module.exports = { signup, login, getUsers };
+
+
+module.exports = { signup, login };
